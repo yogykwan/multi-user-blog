@@ -45,13 +45,16 @@ class BlogHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
-    def login(self, user):
-        self.set_secure_cookie('user_id', str(user.key().id()))
-
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
+    
+    def login(self, user):
+        self.set_secure_cookie('user_id', str(user.key().id()))
+
+    def logout(self):
+        self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
 ### blog
 
@@ -222,6 +225,11 @@ class Login(BlogHandler):
         else:
             self.render("login.html", error = "Username and password don't match!")
 
+class Logout(BlogHandler):
+    def get(self):
+        self.logout()
+        self.redirect('/signup')
+
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
@@ -230,5 +238,6 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/signup', Signup),
                                ('/welcome', Welcome),
                                ('/login', Login),
+                               ('/logout', Logout),
                                ],
                               debug=True)
