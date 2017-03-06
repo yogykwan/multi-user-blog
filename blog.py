@@ -110,10 +110,12 @@ def make_pw_hash(name, pw, salt = None):
     if not salt:
         salt = make_salt()
     h = hashlib.sha256(name + pw + salt).hexdigest()
+    print "sdd" + salt + " ddd!!!! " + h
     return '%s,%s' % (salt, h)
 
 def valid_pw(name, password, h):
     salt = h.split(',')[0]
+    print name + "###" + password + " -- " + h
     return h == make_pw_hash(name, password, salt)
 
 def users_key(name = 'default'):
@@ -130,13 +132,19 @@ class User(db.Model):
 
     @classmethod
     def by_name(cls, name):
-        return User.all().filter('name=', name).get()
+        return User.all().filter('name =', name).get()
     
     @classmethod
     def register(cls, name, pw, email = None):
         pw_hash = make_pw_hash(name, pw)
         return User(name = name, pw_hash = pw_hash, email = email, parent = users_key())
 
+    @classmethod
+    def login(cls, name, pw):
+        u = cls.by_name(name)
+        if u and valid_pw(name, pw, u.pw_hash):
+            return u
+        return None
 
 USERNAME_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
 PASSWORD_RE = re.compile("^.{3,20}$")
@@ -200,6 +208,20 @@ class Welcome(BlogHandler):
         else:
             self.redirect('/signup')
 
+class Login(BlogHandler):
+    def get(self):
+        self.render("login.html")
+
+    def post(self):
+        username = self.request.get('username')
+        password = self.request.get('password')
+        u = User.login(username, password)
+        if u:
+            self.login(u)
+            self.redirect('/welcome')
+        else:
+            self.render("login.html", error = "Username and password don't match!")
+
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
@@ -207,5 +229,6 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/newpost', NewPost),
                                ('/signup', Signup),
                                ('/welcome', Welcome),
+                               ('/login', Login),
                                ],
                               debug=True)
