@@ -1,6 +1,6 @@
 # multi-user-blog
 
-fsnd: a multi user blog website allowing users to post, edit, delete, like posts after signup and login.
+fsnd: a multi user blog(along the lines of Medium) where users can sign in and post blog posts as well as 'Like' and 'Comment' on other posts made on the blog.
 
 ## Setup
 - Install Python if necessary.
