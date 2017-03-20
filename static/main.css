@@ -18,8 +18,8 @@ h2 {
 }
 
 label {
-  display: block;
-  font-size: 20px;
+    display: block;
+    font-size: 20px;
 }
 
 label + label {
@@ -34,14 +34,14 @@ input[type=text] {
 }
 
 textarea {
-  width: 500px;
-  height: 400px;
-  font-size: 17px;
-  font-family: monospace;
+    width: 500px;
+    height: 400px;
+    font-size: 17px;
+    font-family: monospace;
 }
 
 input[type=submit] {
-  font-size: 24px;
+    font-size: 24px;
 }
 
 .main-title {
@@ -68,10 +68,17 @@ input[type=submit] {
     font-weight: bold;
 }
 
+.post-author {
+    position: absolute;
+    right: 200px;
+    bottom: 0;
+    color: #718f99;
+}
+
 .post-date {
     position: absolute;
-    right: 0px;
-    bottom: 0px;
+    right: 0;
+    bottom: 0;
     color: #999;
 }
 

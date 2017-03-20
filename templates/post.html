@@ -3,6 +3,9 @@
         <div class="post-title">
             {{p.subject}}
         </div>
+        <div class="post-author">
+            {{p.user.name}}
+        </div>
         <div class="post-date">
             {{p.created.strftime("%b %d, %Y")}}
         </div>

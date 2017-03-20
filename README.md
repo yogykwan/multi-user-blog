@@ -42,7 +42,7 @@ fsnd: a multi user blog(along the lines of Medium) where users can sign in and p
 ## Step 5: Add Other Features on Your Own
 - Users should only be able to edit/delete their posts. They receive an error message if they disobey this rule.
 - Users can like/unlike posts, but not their own. They receive an error message if they disobey this rule.
-- Users can comment on posts. They can only edit/delete their own posts, and they should receive an error message if they disobey this rule.
+- Users can comment on posts. They can only edit/delete their own comments, and they should receive an error message if they disobey this rule.
 
 ## Step 6: Final Touches
 - Create a README.md file explaining how to run your code.
