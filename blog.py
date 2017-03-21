@@ -140,7 +140,8 @@ class PostPage(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
         if post:
-            self.render("permalink.html", post=post)
+            liked = self.user.user_likes.filter("post =", post).count() > 0
+            self.render("permalink.html", post=post, user=self.user, liked=liked)
         else:
             self.error(404)
 
@@ -161,8 +162,6 @@ class NewPost(BlogHandler):
         else:
             error = "Complete subject or content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
-
-
 
 
 
@@ -255,9 +254,37 @@ class Logout(BlogHandler):
         self.redirect('/signup')
 
 
+def like_key(name='default'):
+    return db.Key.from_path('likes', name)
+
+class Like(db.Model):
+    user = db.ReferenceProperty(User, required=True, collection_name='user_likes')
+    post = db.ReferenceProperty(Post, required=True, collection_name='post_likes')
+
+
+class LikeBtn(BlogHandler):
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        like_btn =  self.request.get('like-btn')
+        if post.user != self.user and post:
+            like = self.user.user_likes.filter("post =", post).get()
+            if like_btn == 'like':
+                if not like:
+                    like = Like(user=self.user, post=post, parent=like_key())
+                    like.put()
+            elif like_btn == 'unlike':
+                if like:
+                    like.delete()
+            self.redirect('/blog/' + post_id)
+        else:
+            self.error(403)
+
+
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
                                ('/blog/([0-9]+)', PostPage),
+                               ('/blog/([0-9]+)/like', LikeBtn),
                                ('/blog/newpost', NewPost),
                                ('/signup', Signup),
                                ('/welcome', Welcome),

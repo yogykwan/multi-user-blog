@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-    {{post.render() | safe}}
+{{post.render() | safe}}
+
+{% if user and post.user.name != user.name %}
+<div class="like">
+    {% if liked == True %}
+    <form action="/blog/{{ post.key().id()}}/like" method="post">
+        <button type="submit" name="like-btn" value="unlike">Unlike</button>
+    </form>
+    {% endif %}
+    {% if liked == False %}
+    <form action="/blog/{{ post.key().id()}}/like" method="post">
+        <button type="submit" name="like-btn" value="like">Like</button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
 {% endblock %}
+
