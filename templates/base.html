@@ -8,13 +8,20 @@
 </head>
 
 <body>
-    <a href="/blog" class="main-title">
-        Multi User Blog
-    </a>
+<header>
+    <a href="/login">Log In</a>
+    <a href="/logout">Log Out</a>
+    <a href="/signup">Sign Up</a>
+    <a href="/blog/newpost">New Post</a>
+</header>
 
-    <div id="content">
-        {% block content %}
-        {% endblock %}
-    </div>
+<a href="/blog" class="main-title">
+    Multi User Blog
+</a>
+
+<div id="content">
+    {% block content %}
+    {% endblock %}
+</div>
 </body>
 </html>
