@@ -6,12 +6,12 @@
 {% if user and post.user.name != user.name %}
 <div class="like">
     {% if liked == True %}
-    <form action="/blog/{{ post.key().id()}}/like" method="post">
+    <form action="/blog/{{post.key().id()}}/like" method="post">
         <button type="submit" name="like-btn" value="unlike">Unlike</button>
     </form>
     {% endif %}
     {% if liked == False %}
-    <form action="/blog/{{ post.key().id()}}/like" method="post">
+    <form action="/blog/{{post.key().id()}}/like" method="post">
         <button type="submit" name="like-btn" value="like">Like</button>
     </form>
     {% endif %}
@@ -19,14 +19,52 @@
 {% endif %}
 
 {% if user and post.user.name == user.name %}
-    <form action="/blog/{{ post.key().id()}}/edit" method="get">
+<div class="manage-post">
+    <form action="/blog/{{post.key().id()}}/edit" method="get">
         <button type="submit">Edit</button>
     </form>
 
-    <form action="/blog/{{ post.key().id()}}/delete" method="post">
+    <form action="/blog/{{post.key().id()}}/delete" method="post">
         <button type="submit">Delete</button>
     </form>
+</div>
 {% endif %}
+
+{% if user and post.user.name != user.name %}
+<div class="add-comment">
+    <form action="/blog/{{ post.key().id()}}/comment/newcomment" method="get">
+        <button type="submit">Comment</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="comments">
+    <h3>Comments</h3>
+    <br>
+    {% for comment in comments %}
+    <div class="comment-content">
+        {{ comment.content }}
+    </div>
+    <div class="comment-author">
+        {{ comment.user.name }}
+    </div>
+    <div class="comment-author">
+        {{ comment.created.strftime("%b %d, %Y") }}
+    </div>
+
+    {% if comment.user.name == user.name %}
+    <div class="manage-comment">
+        <form action="/blog/{{post.key().id()}}/comment/{{comment.key().id()}}/edit" method="get">
+            <button type="submit">Edit</button>
+        </form>
+
+        <form action="/blog/{{post.key().id()}}/comment/{{comment.key().id()}}/delete" method="post">
+            <button type="submit">Delete</button>
+        </form>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
 
 {% endblock %}
 

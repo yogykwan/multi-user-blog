@@ -61,10 +61,12 @@ class BlogHandler(webapp2.RequestHandler):
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
+
 ### user
 
 def make_salt(length=5):
     return ''.join(random.choice(string.letters) for x in xrange(length))
+
 
 def make_pw_hash(name, pw, salt=None):
     if not salt:
@@ -72,12 +74,15 @@ def make_pw_hash(name, pw, salt=None):
     h = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s,%s' % (salt, h)
 
+
 def valid_pw(name, password, h):
     salt = h.split(',')[0]
     return h == make_pw_hash(name, password, salt)
 
+
 def users_key(name='default'):
     return db.Key.from_path('users', name)
+
 
 class User(db.Model):
     name = db.StringProperty(required=True)
@@ -103,6 +108,7 @@ class User(db.Model):
         if u and valid_pw(name, pw, u.pw_hash):
             return u
         return None
+
 
 ### blog
 
@@ -139,7 +145,8 @@ class PostPage(BlogHandler):
         post = db.get(key)
         if post:
             liked = self.user.user_likes.filter("post =", post).count() > 0
-            self.render("permalink.html", post=post, user=self.user, liked=liked)
+            comments = post.post_comments.order('-created')
+            self.render("permalink.html", post=post, user=self.user, liked=liked, comments=comments)
         else:
             self.error(404)
 
@@ -186,6 +193,7 @@ class EditPost(BlogHandler):
             else:
                 error = "Complete subject or content, please!"
                 self.render("editpost.html", subject=subject, content=content, error=error)
+
 
 class DeletePost(BlogHandler):
     def post(self, post_id):
@@ -290,6 +298,7 @@ class Logout(BlogHandler):
 def like_key(name='default'):
     return db.Key.from_path('likes', name)
 
+
 class Like(db.Model):
     user = db.ReferenceProperty(User, required=True, collection_name='user_likes')
     post = db.ReferenceProperty(Post, required=True, collection_name='post_likes')
@@ -299,7 +308,7 @@ class LikeBtn(BlogHandler):
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-        like_btn =  self.request.get('like-btn')
+        like_btn = self.request.get('like-btn')
         if post.user != self.user and post:
             like = self.user.user_likes.filter("post =", post).get()
             if like_btn == 'like':
@@ -314,10 +323,92 @@ class LikeBtn(BlogHandler):
             self.error(403)
 
 
+class Comment(db.Model):
+    user = db.ReferenceProperty(User, required=True, collection_name='user_comments')
+    post = db.ReferenceProperty(Post, required=True, collection_name='post_comments')
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
+
+
+def comment_key(name='default'):
+    return db.Key.from_path('comments', name)
+
+
+class NewComment(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        if post and self.user:
+            self.render('newcomment.html')
+        else:
+            self.error(404)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        content = self.request.get('comment')
+        if post and self.user:
+            if content:
+                comment = Comment(content=content, user=self.user, post=post, parent=comment_key())
+                comment.put()
+                self.redirect('/blog/' + post_id)
+            else:
+                error = "Complete content of comment, please!"
+                self.render('newcomment.html', comment=content, error=error)
+        else:
+            self.error(404)
+
+
+class EditComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        p_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(p_key)
+        c_key = db.Key.from_path('Comment', int(comment_id), parent=comment_key())
+        comment = db.get(c_key)
+        if comment and self.user.key().id() == comment.user.key().id():
+            self.render('editcomment.html', comment=comment.content)
+        else:
+            self.error(403)
+
+    def post(self, post_id, comment_id):
+        p_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(p_key)
+        c_key = db.Key.from_path('Comment', int(comment_id), parent=comment_key())
+        comment = db.get(c_key)
+        content = self.request.get('comment')
+        if comment and self.user.key().id() == comment.user.key().id():
+            if content:
+                comment.content = content
+                comment.put()
+                self.redirect('/blog/' + post_id)
+            else:
+                error = "Complete content of comment, please!"
+                self.render('editcomment.html', comment=content, error=error)
+        else:
+            self.error(403)
+
+
+class DeleteComment(BlogHandler):
+    def post(self, post_id, comment_id):
+        p_key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(p_key)
+        c_key = db.Key.from_path('Comment', int(comment_id), parent=comment_key())
+        comment = db.get(c_key)
+        if comment and self.user.key().id() == comment.user.key().id():
+            comment.delete()
+            self.redirect('/blog/' + post_id)
+        else:
+            self.error(403)
+
+
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/([0-9]+)/like', LikeBtn),
+                               ('/blog/([0-9]+)/comment/newcomment', NewComment),
+                               ('/blog/([0-9]+)/comment/([0-9]+)/delete', DeleteComment),
+                               ('/blog/([0-9]+)/comment/([0-9]+)/edit', EditComment),
                                ('/blog/newpost', NewPost),
                                ('/blog/([0-9]+)/edit', EditPost),
                                ('/blog/([0-9]+)/delete', DeletePost),
