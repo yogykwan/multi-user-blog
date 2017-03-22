@@ -70,12 +70,10 @@ def make_pw_hash(name, pw, salt=None):
     if not salt:
         salt = make_salt()
     h = hashlib.sha256(name + pw + salt).hexdigest()
-    print "sdd" + salt + " ddd!!!! " + h
     return '%s,%s' % (salt, h)
 
 def valid_pw(name, password, h):
     salt = h.split(',')[0]
-    print name + "###" + password + " -- " + h
     return h == make_pw_hash(name, password, salt)
 
 def users_key(name='default'):
@@ -163,6 +161,41 @@ class NewPost(BlogHandler):
             error = "Complete subject or content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
+
+class EditPost(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        print self.user.name, post.user.name, post.subject
+        if self.user and post and self.user.key().id() == post.user.key().id():
+            self.render("editpost.html", subject=post.subject, content=post.content)
+        else:
+            self.error(404)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if self.user and post and self.user.key().id() == post.user.key().id():
+            if subject and content:
+                post.subject = subject
+                post.content = content
+                post.put()
+                self.redirect('/blog/' + str(post_id))
+            else:
+                error = "Complete subject or content, please!"
+                self.render("editpost.html", subject=subject, content=content, error=error)
+
+class DeletePost(BlogHandler):
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        if self.user and post and self.user.key().id() == post.user.key().id():
+            post.delete()
+            self.redirect('/blog')
+        else:
+            self.error(403)
 
 
 USERNAME_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
@@ -286,6 +319,8 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/([0-9]+)/like', LikeBtn),
                                ('/blog/newpost', NewPost),
+                               ('/blog/([0-9]+)/edit', EditPost),
+                               ('/blog/([0-9]+)/delete', DeletePost),
                                ('/signup', Signup),
                                ('/welcome', Welcome),
                                ('/login', Login),

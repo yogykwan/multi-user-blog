@@ -18,5 +18,15 @@
 </div>
 {% endif %}
 
+{% if user and post.user.name == user.name %}
+    <form action="/blog/{{ post.key().id()}}/edit" method="get">
+        <button type="submit">Edit</button>
+    </form>
+
+    <form action="/blog/{{ post.key().id()}}/delete" method="post">
+        <button type="submit">Delete</button>
+    </form>
+{% endif %}
+
 {% endblock %}
 
