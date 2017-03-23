@@ -30,7 +30,7 @@
 </div>
 {% endif %}
 
-{% if user and post.user.name != user.name %}
+{% if user %}
 <div class="add-comment">
     <form action="/blog/{{ post.key().id()}}/comment/newcomment" method="get">
         <button type="submit">Comment</button>

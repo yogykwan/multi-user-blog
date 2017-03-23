@@ -144,7 +144,7 @@ class PostPage(BlogHandler):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
         if post:
-            liked = self.user.user_likes.filter("post =", post).count() > 0
+            liked = self.user and self.user.user_likes.filter("post =", post).count() > 0
             comments = post.post_comments.order('-created')
             self.render("permalink.html", post=post, user=self.user, liked=liked, comments=comments)
         else:
@@ -153,6 +153,8 @@ class PostPage(BlogHandler):
 
 class NewPost(BlogHandler):
     def get(self):
+        if not self.user:
+            self.redirect('/login')
         self.render("newpost.html")
 
     def post(self):
