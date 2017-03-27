@@ -4,6 +4,7 @@ import hashlib
 import re
 import string
 import random
+import time
 import webapp2
 import jinja2
 
@@ -133,6 +134,7 @@ class DeletePost(BlogHandler):
         post = Post.by_id(int(post_id))
         if self.user and post and self.user.key().id() == post.user.key().id():
             post.delete()
+            time.sleep(0.1)
             self.redirect('/blog')
         else:
             self.error(403)
@@ -239,6 +241,7 @@ class LikeBtn(BlogHandler):
             elif like_btn == 'unlike':
                 if like:
                     like.delete()
+            time.sleep(0.1)
             self.redirect('/blog/' + post_id)
         else:
             self.error(403)
@@ -258,6 +261,7 @@ class NewComment(BlogHandler):
             if content:
                 comment = Comment.create(content, self.user, post)
                 comment.put()
+                time.sleep(0.1)
                 self.redirect('/blog/' + post_id)
             else:
                 error = "Complete content of comment, please!"
@@ -297,6 +301,7 @@ class DeleteComment(BlogHandler):
         comment = Comment.by_id(int(comment_id))
         if comment and self.user.key().id() == comment.user.key().id():
             comment.delete()
+            time.sleep(0.1)
             self.redirect('/blog/' + post_id)
         else:
             self.error(403)
