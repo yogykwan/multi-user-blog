@@ -10,7 +10,7 @@ class Post(db.Model):
     user = db.ReferenceProperty(User, required=True, collection_name='user_posts')
 
     def render(self):
-        self._render_text = self.content#.replace('\n', '<br>')
+        self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p=self)
 
     @classmethod

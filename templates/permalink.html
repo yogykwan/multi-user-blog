@@ -42,27 +42,7 @@
     <h3>Comments</h3>
     <br>
     {% for comment in comments %}
-    <div class="comment-content">
-        {{ comment.content }}
-    </div>
-    <div class="comment-author">
-        {{ comment.user.name }}
-    </div>
-    <div class="comment-author">
-        {{ comment.created.strftime("%b %d, %Y") }}
-    </div>
-
-    {% if comment.user.name == user.name %}
-    <div class="manage-comment">
-        <form action="/blog/{{post.key().id()}}/comment/{{comment.key().id()}}/edit" method="get">
-            <button type="submit">Edit</button>
-        </form>
-
-        <form action="/blog/{{post.key().id()}}/comment/{{comment.key().id()}}/delete" method="post">
-            <button type="submit">Delete</button>
-        </form>
-    </div>
-    {% endif %}
+    {{comment.render(post, user) | safe}}
     {% endfor %}
 </div>
 
