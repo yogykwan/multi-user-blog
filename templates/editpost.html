@@ -16,6 +16,11 @@
 
     <div class="error">{{error}}</div>
 
-    <input type="submit">
+    <input type="submit" value="Update">
+</form>
+
+
+<form action="/blog/{{post_id}}" method="get">
+    <button type="submit">Cancel</button>
 </form>
 {% endblock %}
