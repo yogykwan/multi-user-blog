@@ -9,10 +9,13 @@
 
 <body>
 <header>
-    <a href="/login">Log In</a>
-    <a href="/logout">Log Out</a>
-    <a href="/signup">Sign Up</a>
+    {% if user %}
     <a href="/blog/newpost">New Post</a>
+    <a href="/logout">Log Out</a>
+    {% else %}
+    <a href="/login">Log In</a>
+    <a href="/signup">Sign Up</a>
+    {% endif %}
 </header>
 
 <a href="/blog" class="main-title">
