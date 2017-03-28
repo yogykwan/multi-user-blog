@@ -2,6 +2,7 @@ import time
 
 from blog_handler import BlogHandler
 from models import Post
+from utility import user_logged_in, post_exists, user_owns_post
 
 
 class BlogFront(BlogHandler):
@@ -11,25 +12,20 @@ class BlogFront(BlogHandler):
 
 
 class PostPage(BlogHandler):
-    def get(self, post_id):
-        post = Post.by_id(int(post_id))
-        if post:
-            liked = self.user and self.user.user_likes.filter("post =", post).count() > 0
-            comments = post.post_comments.order('-created')
-            self.render("permalink.html", post=post, user=self.user, liked=liked, comments=comments)
-        else:
-            self.error(404)
+    @post_exists
+    def get(self, post):
+        liked = self.user and self.user.user_likes.filter("post =", post).count() > 0
+        comments = post.post_comments.order('-created')
+        self.render("permalink.html", post=post, user=self.user, liked=liked, comments=comments)
 
 
 class NewPost(BlogHandler):
+    @user_logged_in
     def get(self):
-        if not self.user:
-            self.redirect('/login')
         self.render("newpost.html")
 
+    @user_logged_in
     def post(self):
-        if not self.user:
-            self.redirect('/login')
         subject = self.request.get('subject')
         content = self.request.get('content')
         if subject and content:
@@ -42,35 +38,33 @@ class NewPost(BlogHandler):
 
 
 class EditPost(BlogHandler):
-    def get(self, post_id):
-        post = Post.by_id(int(post_id))
-        print self.user.name, post.user.name, post.subject
-        if self.user and post and self.user.key().id() == post.user.key().id():
-            self.render("editpost.html", subject=post.subject, content=post.content, post_id=post_id)
-        else:
-            self.error(404)
+    @user_logged_in
+    @post_exists
+    @user_owns_post
+    def get(self, post):
+        self.render("editpost.html", subject=post.subject, content=post.content, post_id=post.key().id())
 
-    def post(self, post_id):
-        post = Post.by_id(int(post_id))
+    @user_logged_in
+    @post_exists
+    @user_owns_post
+    def post(self, post):
         subject = self.request.get('subject')
         content = self.request.get('content')
-        if self.user and post and self.user.key().id() == post.user.key().id():
-            if subject and content:
-                post.subject = subject
-                post.content = content
-                post.put()
-                self.redirect('/blog/' + str(post_id))
-            else:
-                error = "Complete subject or content, please!"
-                self.render("editpost.html", subject=subject, content=content, error=error)
+        if subject and content:
+            post.subject = subject
+            post.content = content
+            post.put()
+            self.redirect('/blog/' + str(post.key().id()))
+        else:
+            error = "Complete subject or content, please!"
+            self.render("editpost.html", subject=subject, content=content, post_id=post.key().id(), error=error)
 
 
 class DeletePost(BlogHandler):
-    def post(self, post_id):
-        post = Post.by_id(int(post_id))
-        if self.user and post and self.user.key().id() == post.user.key().id():
-            post.delete()
-            time.sleep(0.1)
-            self.redirect('/blog')
-        else:
-            self.error(403)
+    @user_logged_in
+    @post_exists
+    @user_owns_post
+    def post(self, post):
+        post.delete()
+        time.sleep(0.1)
+        self.redirect('/blog')

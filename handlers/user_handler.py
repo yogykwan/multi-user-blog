@@ -19,8 +19,8 @@ class Signup(BlogHandler):
             params["error_username"] = "Invalid username!"
             passed = False
         else:
-            u = User.by_name(self.username)
-            if u:
+            user = User.by_name(self.username)
+            if user:
                 params["error_username"] = "User already exists!"
                 passed = False
         if not valid_password(self.password):
@@ -34,15 +34,12 @@ class Signup(BlogHandler):
             passed = False
 
         if passed:
-            u = User.register(self.username, self.password, self.email)
-            u.put()
-            self.login(u)
+            user = User.register(self.username, self.password, self.email)
+            user.put()
+            self.login(user)
             self.redirect('/welcome')
         else:
             self.render("signup.html", **params)
-
-    def done(self, *a, **kw):
-        raise NotImplementedError
 
 
 class Welcome(BlogHandler):
@@ -61,9 +58,9 @@ class Login(BlogHandler):
     def post(self):
         username = self.request.get('username')
         password = self.request.get('password')
-        u = User.login(username, password)
-        if u:
-            self.login(u)
+        user = User.login(username, password)
+        if user:
+            self.login(user)
             self.redirect('/welcome')
         else:
             self.render("login.html", error="Username and password don't match!")

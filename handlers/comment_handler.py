@@ -1,65 +1,57 @@
 import time
 
 from blog_handler import BlogHandler
-from models import Post, Comment
+from models import Comment
+from utility import user_logged_in, comment_exists, user_owns_comment, post_exists
 
 
 class NewComment(BlogHandler):
-    def get(self, post_id):
-        post = Post.by_id(int(post_id))
-        if post and self.user:
-            self.render('newcomment.html')
-        else:
-            self.error(404)
+    @user_logged_in
+    @post_exists
+    def get(self, post):
+        self.render('newcomment.html')
 
-    def post(self, post_id):
-        post = Post.by_id(int(post_id))
+    @user_logged_in
+    @post_exists
+    def post(self, post):
         content = self.request.get('comment')
-        if post and self.user:
-            if content:
-                comment = Comment.create(content, self.user, post)
-                comment.put()
-                time.sleep(0.1)
-                self.redirect('/blog/' + post_id)
-            else:
-                error = "Complete content of comment, please!"
-                self.render('newcomment.html', comment=content, error=error)
+        if content:
+            comment = Comment.create(content, self.user, post)
+            comment.put()
+            time.sleep(0.1)
+            self.redirect('/blog/' + str(post.key().id()))
         else:
-            self.error(404)
+            error = "Complete content of comment, please!"
+            self.render('newcomment.html', comment=content, error=error)
 
 
 class EditComment(BlogHandler):
-    def get(self, post_id, comment_id):
-        post = Post.by_id(int(post_id))
-        comment = Comment.by_id(int(comment_id))
-        if comment and self.user.key().id() == comment.user.key().id():
-            self.render('editcomment.html', comment=comment.content, post=post)
-        else:
-            self.error(403)
+    @user_logged_in
+    @comment_exists
+    @user_owns_comment
+    def get(self, post, comment):
+        self.render('editcomment.html', comment=comment.content, post_id=post.key().id())
 
-    def post(self, post_id, comment_id):
-        post = Post.by_id(int(post_id))
-        comment = Comment.by_id(int(comment_id))
+    @user_logged_in
+    @comment_exists
+    @user_owns_comment
+    def post(self, post, comment):
         content = self.request.get('comment')
-        if comment and self.user.key().id() == comment.user.key().id():
-            if content:
-                comment.content = content
-                comment.put()
-                self.redirect('/blog/' + post_id)
-            else:
-                error = "Complete content of comment, please!"
-                self.render('editcomment.html', comment=content, error=error)
+        if content:
+            comment.content = content
+            comment.put()
+            time.sleep(0.1)
+            self.redirect('/blog/' + str(post.key().id()))
         else:
-            self.error(403)
+            error = "Complete content of comment, please!"
+            self.render('editcomment.html', comment=content, post_id=post.key().id(), error=error)
 
 
 class DeleteComment(BlogHandler):
-    def post(self, post_id, comment_id):
-        post = Post.by_id(int(post_id))
-        comment = Comment.by_id(int(comment_id))
-        if comment and self.user.key().id() == comment.user.key().id():
-            comment.delete()
-            time.sleep(0.1)
-            self.redirect('/blog/' + post_id)
-        else:
-            self.error(403)
+    @user_logged_in
+    @comment_exists
+    @user_owns_comment
+    def post(self, post, comment):
+        comment.delete()
+        time.sleep(0.1)
+        self.redirect('/blog/' + str(post.key().id()))

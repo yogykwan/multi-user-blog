@@ -4,6 +4,7 @@ import hashlib
 import re
 import string
 import random
+from functools import wraps
 
 import jinja2
 
@@ -88,3 +89,68 @@ def valid_password(password):
 
 def valid_email(email):
     return email and EMAIL_RE.match(email)
+
+
+# validation decorators
+
+def user_logged_in(function):
+    @wraps(function)
+    def wrapper(self, *a, **kw):
+        print kw
+        if self.user:
+            return function(self, *a, **kw)
+        else:
+            self.redirect('/login')
+
+    return wrapper
+
+
+def post_exists(function):
+    @wraps(function)
+    def wrapper(self, post_id):
+        post = db.get(db.Key.from_path('Post', int(post_id), parent=blog_key()))
+        if post:
+            return function(self, post)
+        else:
+            self.error(404)
+            return
+
+    return wrapper
+
+
+def comment_exists(function):
+    @wraps(function)
+    def wrapper(self, post_id, comment_id):
+        post = db.get(db.Key.from_path('Post', int(post_id), parent=blog_key()))
+        comment = db.get(db.Key.from_path('Comment', int(comment_id), parent=comment_key()))
+        if post and comment:
+            return function(self, post, comment)
+        else:
+            self.error(404)
+            return
+
+    return wrapper
+
+
+def user_owns_post(function):
+    @wraps(function)
+    def wrapper(self, post):
+        if self.user.key().id() == post.user.key().id():
+            return function(self, post)
+        else:
+            self.error(401)
+            return
+
+    return wrapper
+
+
+def user_owns_comment(function):
+    @wraps(function)
+    def wrapper(self, post, comment):
+        if self.user.key().id() == comment.user.key().id():
+            return function(self, post, comment)
+        else:
+            self.error(401)
+            return
+
+    return wrapper

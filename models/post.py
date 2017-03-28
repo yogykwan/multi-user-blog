@@ -2,6 +2,7 @@ from google.appengine.ext import db
 from user import User
 from utility import render_str, blog_key
 
+
 class Post(db.Model):
     subject = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
@@ -24,4 +25,3 @@ class Post(db.Model):
     @classmethod
     def create(cls, subject, content, user):
         return Post(subject=subject, content=content, user=user, parent=blog_key())
-
